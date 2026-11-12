@@ -10,9 +10,10 @@ After GitHub Pages is enabled: https://ruifeng105.github.io/japan-trip-2026/
 - Daily itinerary, sightseeing, restaurants, conference session scheduling, and notes
 - Default Kobe hotel: **Hotel Okura Kobe**, December 13–18 (selected, not necessarily booked)
 - Default Tokyo hotel: **APA Hotel PRIDE Akasaka Kokkaigijidomae**, December 19–22
-- Editable hotels, including alternative accommodation in Kobe and Tokyo
+- Editable hotels in Kobe, the Mt. Fuji region, and Tokyo, with an **Other / Custom hotel** choice and a free-text hotel name
 - Fuji-region choices for December 18–19: **Lake Kawaguchi, Lake Yamanaka, and Hakone**
 - EUR budget with JPY-to-EUR currency conversion and fallback rate
+- Fully editable main travel notes, plus add/edit/delete custom titled note cards
 - Locally saved edits plus JSON import/export
 
 ## Publish with GitHub Pages
@@ -25,7 +26,7 @@ The site is served from the root `index.html`.
 
 This is a **static GitHub Pages website**. Visitors may use the same link, but their edits are saved to their own browsers using localStorage. This does **not** synchronize edits across users or devices.
 
-Use the dashboard's **Export backup / Import plan** to exchange changes. True real-time collaborative editing requires an authenticated backend.
+Use the dashboard's **Export backup / Import plan** to exchange changes without Firebase. Real-time collaboration works after Firebase configuration and joining the same shared room.
 
 This is a public repository: do not commit passport numbers, private booking confirmations, contact details, or payment information.
 
