@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Random 32-byte base64url room IDs.
+    function validRoomId(id) {
+      return id.matches('^[A-Za-z0-9_-]{43}$');
+    }
+    function validPlanWrite() {
+      return request.auth != null
+        && request.resource.data.keys().hasAll(['plan','revision','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasOnly(['plan','revision','updatedAt','updatedBy'])
+        && request.resource.data.plan is map
+        && request.resource.data.plan.version == 2
+        && request.resource.data.plan.keys().hasOnly([
+          'version', 'region', 'regionHotels', 'hotels', 'customHotelNames',
+          'booking', 'sessionDate', 'sessionTime', 'sessionTitle', 'sessionNotes',
+          'activities', 'tasks', 'costs', 'notes', 'flightArrival', 'flightReturn'
+        ])
+        && request.resource.data.plan.activities is list
+        && request.resource.data.plan.tasks is list
+        && request.resource.data.plan.notes is string
+        && request.resource.data.plan.notes.size() <= 12000
+        && request.resource.data.revision is int
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+    }
+    match /tripRooms/{roomId} {
+      // No listing/enumeration of room data.
+      allow list: if false;
+      // Invite link is the editing credential; Firebase anonymous login is required.
+      allow get: if validRoomId(roomId) && request.auth != null;
+      allow create: if validRoomId(roomId) && validPlanWrite()
+        && request.resource.data.revision == 1;
+      allow update: if validRoomId(roomId) && validPlanWrite()
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
