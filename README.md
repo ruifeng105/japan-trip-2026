@@ -30,3 +30,8 @@ Use the dashboard's **Export backup / Import plan** to exchange changes. True re
 This is a public repository: do not commit passport numbers, private booking confirmations, contact details, or payment information.
 
 Exchange rates are informational and may be stale when offline. Hotel defaults reflect **selected options**, not booking confirmations.
+
+
+## Real-time shared editing
+
+The dashboard now includes a **Collaboration** tab with Firebase-based real-time sharing. **It is not active until the project owner completes the Firebase setup.** See [COLLABORATION_SETUP.md](./COLLABORATION_SETUP.md) for instructions and security considerations. Sharing the normal GitHub Pages URL alone does not synchronize edits; participants must join the same invitation room.
