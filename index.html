@@ -13,18 +13,28 @@
 .budget-entry .money-input{min-width:0;flex:1}.budget-entry select{border:1px solid #d7e1df;border-radius:9px;background:white;padding:9px 6px;min-width:82px;font-size:12px}
 .total-card{background:#f4f9f7;border-radius:14px;margin-top:18px;padding:17px}
 @media(max-width:660px){.accommodation{padding:13px}.budget-table{grid-template-columns:minmax(0,1fr) minmax(125px,145px)!important}.budget-entry{flex-direction:column;align-items:stretch}.budget-entry select{width:100%}.fx-rate{font-size:19px}}
+
+.collab-status{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 10px;border:1px solid #c8dcd7;background:#eff7f4;color:#16645c;font-size:12px;font-weight:720}
+.collab-status[data-mode="error"],.collab-status[data-mode="offline"]{background:#fff3ed;color:#a34a2c;border-color:#efd3bf}
+.collab-status[data-mode="config"],.collab-status[data-mode="local"]{background:#eff2f4;color:#596971;border-color:#e0e5e8}
+.collab-info{border:1px solid #dfe9e5;background:#f7fbfa;border-radius:14px;padding:18px;margin:14px 0}
+.collab-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}
+.collab-help{font-size:13px;color:var(--sub);line-height:1.75}
+.collab-url{width:100%;border:1px solid #d7e1df;border-radius:10px;padding:11px;color:#426368;font-size:12px;background:white}
+.collab-warning{font-size:12px;background:#fff8ee;border:1px solid #f0dfbd;padding:13px;border-radius:12px;margin-top:16px;color:#8a6330}
 </style></head><body>
 <div class="app">
 <header class="top"><div class="brand"><div class="mark">⛩</div><div><div class="brand-title">JAPAN JOURNEY <span style="color:var(--coral)">2026</span></div><div class="brand-sub">Editable travel dashboard · Kansai → Mount Fuji → Tokyo</div></div></div>
-<div class="actions"><button class="btn" id="exportBtn">↓ Export backup</button><button class="btn" id="importBtn">↑ Import plan</button><button class="btn" id="shareBtn">⧉ Copy summary</button><button class="btn" id="printBtn">▤ Print / PDF</button><button class="btn danger" id="resetBtn">↺ Reset</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></header>
+<div class="actions"><button class="btn soft" id="collabBtn">☁ Collaboration</button><button class="btn" id="exportBtn">↓ Export backup</button><button class="btn" id="importBtn">↑ Import plan</button><button class="btn" id="shareBtn">⧉ Copy summary</button><button class="btn" id="printBtn">▤ Print / PDF</button><button class="btn danger" id="resetBtn">↺ Reset</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></header>
 <section class="hero"><div><div class="eyebrow" style="color:#eac4a5">10 DAYS IN JAPAN · DECEMBER 13–22, 2026</div><h1>Kobe. Mount Fuji.<br>Tokyo.</h1><p>Your collaborative-ready trip planner for a conference and vacation. Edit hotels, destinations, daily plans, restaurants, activities, and a budget shown in euros.</p>
 <div class="micro"><span class="chip light">📍 Kobe · 5 nights</span><span class="chip light">🗻 Mount Fuji · 1 night</span><span class="chip light">🗼 Tokyo · 3 nights</span><span class="chip light">💶 Budget in EUR</span></div></div>
 <div class="hero-art" aria-hidden="true"><svg viewBox="0 0 470 240" xmlns="http://www.w3.org/2000/svg"><circle cx="343" cy="81" r="57" fill="#e19b78" opacity=".95"/><path d="M70 246 242 31 400 246Z" fill="#83aaa3"/><path d="M165 131 242 31 310 131 269 111 246 94 220 112Z" fill="#fffaf5"/><path d="M12 248 162 136 277 248Z" fill="#538c86"/><path d="M266 247 375 138 483 247Z" fill="#417b77"/><path d="M0 207q81-24 156-2t156 1q85-30 161-6v60H0Z" fill="#153b46" opacity=".34"/></svg></div></section>
+<div class="hrow" style="margin-top:14px"><span class="collab-status" id="collabIndicator" data-mode="local">● Local only</span><span class="muted" style="font-size:12px">Shared editing requires Firebase setup; offline work still works.</span></div>
 <div class="notice" id="saveState">● Edits are saved to this browser only. Export a backup to transfer or share changes. Hotel selection does not equal a confirmed reservation.</div>
 <section class="summary" id="stats"></section>
-<nav class="tabs" aria-label="Trip dashboard pages"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="itinerary">Daily itinerary</button><button class="tab" data-tab="fuji">Fuji options</button><button class="tab" data-tab="budget">Hotels & budget</button><button class="tab" data-tab="notes">Travel notes</button></nav>
+<nav class="tabs" aria-label="Trip dashboard pages"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="itinerary">Daily itinerary</button><button class="tab" data-tab="fuji">Fuji options</button><button class="tab" data-tab="budget">Hotels & budget</button><button class="tab" data-tab="notes">Travel notes</button><button class="tab" data-tab="collab">☁ Collaboration</button></nav>
 <div class="layout"><main id="main"></main><aside class="sidebar" id="sidebar"></aside></div>
-<footer class="footer">Japan Journey 2026 · <strong>English edition</strong> · Auto-save in this browser · Live FX if online · No shared cloud editing or live room availability · Confirm schedules with official providers.</footer></div>
+<footer class="footer">Japan Journey 2026 · <strong>English edition</strong> · Local auto-save · Optional live collaboration via Firebase · Live FX if online · No live hotel availability · Confirm schedules with official providers.</footer></div>
 <div id="modalRoot"></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>(() => {
 'use strict';
@@ -164,7 +174,13 @@ let state;let stored=null;
 try{stored=JSON.parse(localStorage.getItem(STORE)||localStorage.getItem(LEGACY)||'null')}catch{}
 state=normalize(stored);
 let tab='overview', notifyTimer;
-function save(){try{localStorage.setItem(STORE,JSON.stringify(state));$('#saveState').textContent='● Saved in this browser · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · Export a backup to move this plan to another device.';}catch{$('#saveState').textContent='⚠ Browser storage unavailable. Please export a JSON backup.'}}
+let collabInfo={mode:'local',label:'Local only',detail:'Collaboration has not loaded.',room:null,lastRevision:0};
+const SHARED_FIELDS=['version','region','regionHotels','hotels','customHotelNames','booking','sessionDate','sessionTime','sessionTitle','sessionNotes','activities','tasks','costs','notes','flightArrival','flightReturn'];
+function sharedPlan(){return Object.fromEntries(SHARED_FIELDS.map(k=>[k,clone(state[k])]));}
+function showCollabStatus(info){collabInfo={...collabInfo,...info};const e=$('#collabIndicator');if(e){e.dataset.mode=collabInfo.mode;e.textContent='● '+collabInfo.label;}if(tab==='collab'&&!document.activeElement?.matches('input,textarea,select'))render();}
+function applyCollaboratorPlan(plan){const preserveDay=state.selectedDay,preserveFx=clone(state.fx);state=normalize({...state,...clone(plan),selectedDay:preserveDay,fx:preserveFx});try{localStorage.setItem(STORE,JSON.stringify(state))}catch{}const active=document.activeElement;const editing=active?.matches('input:not([type=checkbox]),textarea,select');if(!editing)render();else renderStats();}
+
+function save(){try{localStorage.setItem(STORE,JSON.stringify(state));$('#saveState').textContent='● Saved locally · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · '+(collabInfo.room?'Cloud sync status: '+collabInfo.label:'Use the Collaboration tab to share edits online.');}catch{$('#saveState').textContent='⚠ Browser storage unavailable. Please export a JSON backup.'}window.TripCollab?.localSaved?.();}
 function tell(m){let n=$('#toast');n.textContent=m;n.classList.add('show');clearTimeout(notifyTimer);notifyTimer=setTimeout(()=>n.classList.remove('show'),2700)}
 function setChange(fn,message){fn();save();render();if(message)tell(message)}
 function eventsFor(date){let a=state.activities.filter(x=>x.date===date&&(!x.region||x.region===state.region)).map(x=>{
@@ -215,10 +231,24 @@ return `<div class="accommodation"><div class="hrow"><div><strong>${esc(label)}<
 function costEURLabel(key){return fmtE(moneyEUR(state.costs[key]))}
 function fxLabel(){let fx=state.fx;if(fx.mode==='manual')return 'Manual rate';if(fx.source==='Frankfurter / ECB')return 'Updated '+(fx.date||'recently')+' · Frankfurter / ECB';if(fx.source.startsWith('Previously'))return fx.source+' · '+(fx.date||'date unknown');return 'Offline reference from Nov 12, 2026';}
 function budget(){const total=budgetTotal();return `<section class="panel"><div class="hrow"><div><h2 class="section-title">Hotels & booking status</h2><p class="section-sub">These hotels are the starting defaults, not fixed choices. All three can be changed.</p></div><button class="btn soft" data-nav="fuji">Change Fuji area ↗</button></div>${hotelField('kobe','🌉 Kobe — '+hotelName('kobe'),'Dec 13–18 · 5 nights')}${hotelField('fuji',region().icon+' '+region().name+' — '+hotelName('fuji'),'Dec 18–19 · 1 night')}${hotelField('tokyo','🗼 Tokyo — '+hotelName('tokyo'),'Dec 19–22 · 3 nights')}<div class="guide">Switching a hotel resets its booking status to <b>Selected, not yet booked</b>. An old hotel's confirmation is never carried over automatically. To use another property, choose “Custom hotel”.</div></section><section class="panel"><div class="hrow"><div><h2 class="section-title">Budget planner · EUR</h2><p class="section-sub">Enter each expense in either <b>EUR</b> or <b>JPY</b>. Yen entries are converted automatically to euros.</p></div><span class="chip teal">All totals in €</span></div><div class="fx-panel"><div class="hrow"><div><div class="side-title" style="margin:0">JPY → EUR exchange rate</div><div class="fx-rate" id="fxDisplay">¥10,000 ≈ ${fmtE(10000*Number(state.fx.rate))}</div><div class="hint" id="fxStatus">${esc(fxLabel())}</div></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn small soft" id="refreshFxBtn" data-refresh-fx>↻ Refresh rate</button><button class="btn small" data-manual-fx>${state.fx.mode==='manual'?'Return to auto':'Edit rate'}</button></div></div>${state.fx.mode==='manual'?`<div class="field" style="max-width:250px;margin-top:10px"><label for="manualFxRate">EUR for 1 JPY</label><input type="number" id="manualFxRate" min="0.000001" max="1" step="0.000001" value="${esc(state.fx.rate)}"><span class="hint">Example: 0.005645 means ¥10,000 = €56.45.</span></div>`:''}<div class="hint" style="margin-top:9px">Uses the daily published exchange rate when online; offline it uses the last saved rate or the labeled reference fallback. Card providers may charge a different rate.</div></div><div class="budget-table" style="margin-top:20px;grid-template-columns:minmax(0,1fr) minmax(165px,220px)">${COST_ROWS.map(x=>{const c=state.costs[x[0]];return `<div class="budget-row"><div class="budget-label"><strong>${esc(x[0]==='kobe'?'Kobe · '+hotelName('kobe'):x[0]==='fuji'?region().short+' · '+hotelName('fuji'):x[0]==='tokyo'?'Tokyo · '+hotelName('tokyo'):x[1])}</strong><small>${esc(x[2])}</small><small>In EUR: <b data-eur-for="${x[0]}">${costEURLabel(x[0])}</b></small></div><div class="budget-entry"><input class="money-input" data-cost="${x[0]}" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Amount" value="${esc(c.amount)}"><select aria-label="Expense currency" data-cost-currency="${x[0]}"><option value="EUR" ${c.currency==='EUR'?'selected':''}>EUR €</option><option value="JPY" ${c.currency==='JPY'?'selected':''}>JPY ¥</option></select></div></div>`}).join('')}</div><div class="total-card"><div class="muted" style="font-size:12px">Estimated total · entered expenses only</div><div class="price-total" id="budgetTotal">${fmtE(total)}</div><div class="muted" style="font-size:11px">Costs entered for a room or booking represent the full amount you enter, not a per-person estimate. Blank items are not included.</div></div></section>`;}
-function notes(){return `<section class="panel"><h2 class="section-title">Travel notes & flight details</h2><p class="section-sub">You can edit all of these notes and export a complete backup.</p><div class="fields"><div class="field"><label for="flightArrival">Arrival flight</label><input id="flightArrival" value="${esc(state.flightArrival)}"></div><div class="field"><label for="flightReturn">Return flight</label><input id="flightReturn" value="${esc(state.flightReturn)}"></div><div class="field full"><label for="notesArea">Notes, reservations, restaurants, souvenirs</label><textarea class="notes-area" id="notesArea" spellcheck="false">${esc(state.notes)}</textarea></div></div><div class="guide">This standalone HTML saves edits in the <b>current browser</b>, not to a shared cloud account. For collaboration, export a JSON backup or host the page plus a shared backend.</div></section><section class="panel"><h2 class="section-title">Food & souvenir ideas</h2><p class="section-sub">Add favorite places to the daily itinerary.</p><div class="fields"><div><b>🌉 Kobe</b><ul class="mini-list"><li>Kobe beef teppanyaki · Steakland / Mouriya</li><li>Kobe Fugetsudo Gaufres wafer cookies</li></ul></div><div><b>🍜 Osaka</b><ul class="mini-list"><li>Okonomiyaki · Mizuno / Chibo</li><li>Takoyaki, kushikatsu, savory rice crackers</li></ul></div><div><b>⛩️ Kyoto</b><ul class="mini-list"><li>Matcha sweets · Saryo Tsujiri</li><li>Uji tea, yatsuhashi sweets, folding fans</li></ul></div><div><b>🦌 Nara</b><ul class="mini-list"><li>Kamameshi rice and fresh mochi</li><li>Deer-themed stationery and souvenirs</li></ul></div><div><b>🗻 Mt. Fuji</b><ul class="mini-list"><li>Yamanashi hōtō noodle soup</li><li>Fuji-themed biscuits and keepsakes</li></ul></div><div><b>🗼 Tokyo</b><ul class="mini-list"><li>Sushi, ramen and Asakusa tempura</li><li>Tokyo Banana, limited snacks, stationery</li></ul></div></div></section>`;
+function notes(){return `<section class="panel"><h2 class="section-title">Travel notes & flight details</h2><p class="section-sub">You can edit all of these notes and export a complete backup.</p><div class="fields"><div class="field"><label for="flightArrival">Arrival flight</label><input id="flightArrival" value="${esc(state.flightArrival)}"></div><div class="field"><label for="flightReturn">Return flight</label><input id="flightReturn" value="${esc(state.flightReturn)}"></div><div class="field full"><label for="notesArea">Notes, reservations, restaurants, souvenirs</label><textarea class="notes-area" id="notesArea" spellcheck="false">${esc(state.notes)}</textarea></div></div><div class="guide">Edits are always saved in this browser. Open the <b>Collaboration</b> tab to connect to a Firebase shared room; if configured, changes will also sync to your colleagues.</div></section><section class="panel"><h2 class="section-title">Food & souvenir ideas</h2><p class="section-sub">Add favorite places to the daily itinerary.</p><div class="fields"><div><b>🌉 Kobe</b><ul class="mini-list"><li>Kobe beef teppanyaki · Steakland / Mouriya</li><li>Kobe Fugetsudo Gaufres wafer cookies</li></ul></div><div><b>🍜 Osaka</b><ul class="mini-list"><li>Okonomiyaki · Mizuno / Chibo</li><li>Takoyaki, kushikatsu, savory rice crackers</li></ul></div><div><b>⛩️ Kyoto</b><ul class="mini-list"><li>Matcha sweets · Saryo Tsujiri</li><li>Uji tea, yatsuhashi sweets, folding fans</li></ul></div><div><b>🦌 Nara</b><ul class="mini-list"><li>Kamameshi rice and fresh mochi</li><li>Deer-themed stationery and souvenirs</li></ul></div><div><b>🗻 Mt. Fuji</b><ul class="mini-list"><li>Yamanashi hōtō noodle soup</li><li>Fuji-themed biscuits and keepsakes</li></ul></div><div><b>🗼 Tokyo</b><ul class="mini-list"><li>Sushi, ramen and Asakusa tempura</li><li>Tokyo Banana, limited snacks, stationery</li></ul></div></div></section>`;
 }
-function render(){renderStats();sidebar();$$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));$('#main').innerHTML=({overview,itinerary,fuji,budget,notes})[tab]();}
-function navigate(to){if(!['overview','itinerary','fuji','budget','notes'].includes(to))return;tab=to;render();const tabs=$('.tabs');window.scrollTo({top:Math.max(0,tabs.getBoundingClientRect().top+window.scrollY-10),behavior:'smooth'});}
+function collab(){
+ const live=!!collabInfo.room,invite=window.TripCollab?.invite?.()||'';
+ const noConfig=collabInfo.mode==='config';
+ return `<section class="panel"><div class="hrow"><div><h2 class="section-title">☁ Live collaboration</h2><p class="section-sub">Edit your Japan trip together, from different devices, using a shared invitation link.</p></div><span class="collab-status" data-mode="${esc(collabInfo.mode)}">${esc(collabInfo.label)}</span></div>
+ <div class="collab-info"><strong>${esc(collabInfo.label)}</strong><div class="collab-help">${esc(collabInfo.detail)}</div>${live?`<div class="hint" style="margin-top:8px">Room ${esc(collabInfo.room.slice(0,10))}… · Cloud revision ${esc(collabInfo.lastRevision)}</div>`:''}</div>
+ ${live?`<div class="field"><label>Invitation URL — anyone who has this link may edit the trip</label><input class="collab-url" value="${esc(invite)}" readonly onclick="this.select()"></div><div class="collab-actions"><button class="btn primary" data-collab="copy">⧉ Copy invite link</button><button class="btn" data-collab="retry">↻ Reconnect / sync</button><button class="btn danger" data-collab="leave">Leave this room</button></div>`
+ :`<div class="collab-actions"><button class="btn primary" data-collab="create" ${noConfig?'disabled':''}>+ Create shared room</button><button class="btn" data-collab="retry">↻ Check connection</button></div>`}
+ <div class="collab-warning"><b>Privacy:</b> The invitation link is an editing key, not a public read-only link. Anyone holding it can view, change, and export the trip. Never enter passport numbers, payment details or confidential booking codes. Changes are also cached locally. Do not post the invitation link in public places.</div></section>
+ <section class="panel"><h2 class="section-title">Firebase setup</h2><p class="section-sub">One-time project-owner setup. No paid server is required for the GitHub Pages frontend.</p>
+ <div class="collab-help"><b>1.</b> Create a Firebase project and register a Web App at <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a>.<br><b>2.</b> Enable <b>Authentication → Sign-in method → Anonymous</b>.<br><b>3.</b> Create <b>Firestore Database</b> in production mode and publish the restrictive rules from <a href="https://github.com/ruifeng105/japan-trip-2026/blob/main/firestore.rules" target="_blank" rel="noopener">firestore.rules</a>.<br><b>4.</b> Paste the <b>Firebase Web App config</b> from Project settings below, then click Save. Do not paste service-account credentials.<br><b>5.</b> Create a shared room, copy its link and send it privately to your travel companions.</div>
+ <div class="field" style="margin-top:15px"><label for="firebaseConfigInput">Firebase Web App config (public client settings only)</label><textarea id="firebaseConfigInput" spellcheck="false" placeholder='{"apiKey":"...", "authDomain":"...", "projectId":"...", "appId":"..."}'></textarea><small class="hint">The configuration is saved in this browser. The shared invitation link includes these public identifiers so your colleague does not need to configure Firebase separately.</small></div>
+ <div class="collab-actions"><button class="btn soft" data-collab="configure">Save Firebase config in this browser</button><a class="btn" href="https://github.com/ruifeng105/japan-trip-2026/blob/main/COLLABORATION_SETUP.md" target="_blank" rel="noopener">Read setup guide ↗</a></div>
+ <div class="collab-help"><b>Sync behavior:</b> Changes are saved locally first, then typically synchronized after about one second. Separate activities and budget items merge independently. If two people change the exact same field at once, the later committed change wins. Cloud access requires internet. Export JSON backups periodically.</div></section>`;
+}
+function render(){renderStats();sidebar();$$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));$('#main').innerHTML=({overview,itinerary,fuji,budget,notes,collab})[tab]();}
+function navigate(to){if(!['overview','itinerary','fuji','budget','notes','collab'].includes(to))return;tab=to;render();const tabs=$('.tabs');window.scrollTo({top:Math.max(0,tabs.getBoundingClientRect().top+window.scrollY-10),behavior:'smooth'});}
 function editActivity(activityId,date){const source=state.activities.find(x=>x.id===activityId);if(activityId==='session'){navigate('overview');setTimeout(()=>$('#sessionDate')?.focus(),100);return}
  let a=source||{id:'',date:date||state.selectedDay,time:'12:00',title:'',location:'',category:'sight',note:'',optional:false,done:false,region:['2026-12-18','2026-12-19'].includes(date||state.selectedDay)?state.region:null};
  $('#modalRoot').innerHTML=`<div class="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="hrow"><h2 id="modalTitle">${source?'Edit activity':'Add an activity'}</h2><button class="btn small" id="closeModal">✕ Close</button></div><p class="modal-sub">Your changes will immediately update the itinerary.</p><form id="activityForm" class="fields"><div class="field"><label>Date</label><select name="date">${DAYS.map(x=>`<option value="${x[0]}" ${a.date===x[0]?'selected':''}>Dec ${x[0].slice(-2)} · ${x[1]}</option>`).join('')}</select></div><div class="field"><label>Time</label><input name="time" type="time" value="${/^\d\d:\d\d$/.test(a.time)?esc(a.time):'12:00'}" required></div><div class="field full"><label>Activity or restaurant name *</label><input name="title" value="${esc(a.title)}" required maxlength="160" placeholder="e.g. Senso-ji Temple"></div><div class="field"><label>Category</label><select name="category">${Object.entries(CATEGORY).map(([k,v])=>`<option value="${k}" ${a.category===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>Location (Google Maps link)</label><input name="location" value="${esc(a.location)}" maxlength="250" placeholder="e.g. Senso-ji, Tokyo"></div><div class="field full"><label>Notes</label><textarea name="note">${esc(a.note)}</textarea></div><div class="field full"><label class="field-check"><input type="checkbox" name="optional" ${a.optional?'checked':''}> Optional stop</label></div><div class="field full"><label class="field-check"><input type="checkbox" name="done" ${a.done?'checked':''}> Mark as completed</label></div><div class="field full"><label class="field-check"><input type="checkbox" name="regionSpecific" ${a.region?'checked':''}> Specific to current Mount Fuji route</label><div class="hint">Recommended for Dec 18–19.</div></div><div class="field full"><div class="modal-actions"><div>${source?'<button type="button" class="btn danger" id="deleteActivity">Delete activity</button>':''}</div><button class="btn primary" type="submit">Save activity</button></div></div></form></div></div>`;
@@ -258,6 +288,8 @@ function makeSummary(){const lines=['JAPAN TRIP | DEC 12–22, 2026','',`Kobe (D
  return lines.join('\n');}
 function downloadBackup(){const content=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json;charset=utf-8'});let url=URL.createObjectURL(content);const a=document.createElement('a');a.href=url;a.download='Japan_Trip_2026_English_Backup.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);tell('Backup exported');}
 document.addEventListener('click',e=>{
+ const c=e.target.closest('[data-collab]');if(c){const action=c.dataset.collab;if(action==='configure')window.TripCollab?.configure?.($('#firebaseConfigInput')?.value||'');else window.TripCollab?.[action]?.();return}
+
  const t=e.target.closest('[data-tab]');if(t){navigate(t.dataset.tab);return}
  const nav=e.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}
  const day=e.target.closest('[data-daynav]');if(day){state.selectedDay=day.dataset.daynav;save();navigate('itinerary');return}
@@ -290,13 +322,309 @@ document.addEventListener('input',e=>{
  if(t.id==='notesArea'){state.notes=t.value;save();return}
  if(['flightArrival','flightReturn'].includes(t.id)){state[t.id]=t.value;save();return}
 });
+$('#collabBtn').onclick=()=>navigate('collab');
 $('#exportBtn').onclick=downloadBackup;
 $('#importBtn').onclick=()=>$('#importFile').click();
-$('#importFile').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!parsed||![1,2].includes(parsed.version)||!Array.isArray(parsed.activities))throw Error('Invalid format');if(!confirm('Importing will replace your current changes. Continue?'))return;state=normalize(parsed);save();tab='overview';render();tell('Travel plan imported');if(state.fx.mode==='auto')fetchFx()}catch(error){alert('Import failed. Please select an exported trip dashboard JSON backup.')}finally{e.target.value=''}};
-$('#resetBtn').onclick=()=>{if(confirm('Reset to the original plan and default hotel selections? Your changes will be lost. Export a backup first if needed.')){state=clone(DEFAULT);save();tab='overview';render();tell('Default itinerary restored');fetchFx()}};
+$('#importFile').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(!parsed||![1,2].includes(parsed.version)||!Array.isArray(parsed.activities))throw Error('Invalid format');if(!confirm('Importing will replace your changes and, in a shared room, overwrite the shared trip. Continue?'))return;state=normalize(parsed);save();tab='overview';render();tell('Travel plan imported');if(state.fx.mode==='auto')fetchFx()}catch(error){alert('Import failed. Please select an exported trip dashboard JSON backup.')}finally{e.target.value=''}};
+$('#resetBtn').onclick=()=>{if(confirm('Reset to the original plan? If you are in a shared room, this also resets the shared trip for everyone. Export a backup first if needed.')){state=clone(DEFAULT);save();tab='overview';render();tell('Default itinerary restored');fetchFx()}};
 $('#printBtn').onclick=()=>window.print();
 $('#shareBtn').onclick=async()=>{let s=makeSummary();try{await navigator.clipboard.writeText(s);tell('Itinerary summary copied')}catch{const field=document.createElement('textarea');field.value=s;document.body.append(field);field.select();document.execCommand('copy');field.remove();tell('Itinerary summary copied')}};
 window.addEventListener('keydown',e=>{if(e.key==='Escape')$('#modalRoot').innerHTML=''});
+window.TripApp={getSharedPlan:sharedPlan,setSharedPlan:applyCollaboratorPlan,collabStatus:showCollabStatus,notify:tell};
 render();if(state.fx.mode==='auto')fetchFx();
 })();
-</script></body></html>
+</script>
+<script>window.TRIP_FIREBASE_CONFIG = null;</script>
+<script type="module">
+const SYNC = (()=>{
+/* Merge operations for simultaneous editing of the same itinerary.
+ * - object properties are merged independently;
+ * - activities and checklist entries are merged by stable id;
+ * - edits to the same scalar field use the latest committed write.
+ * No third-party dependencies; deterministic for testability.
+ */
+const SHARED_KEYS = Object.freeze([
+  'version','region','regionHotels','hotels','customHotelNames','booking',
+  'sessionDate','sessionTime','sessionTitle','sessionNotes',
+  'activities','tasks','costs','notes','flightArrival','flightReturn'
+]);
+const copy = value => JSON.parse(JSON.stringify(value));
+const own = (obj,k) => Object.prototype.hasOwnProperty.call(obj,k);
+const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const safeKey = k => typeof k === 'string' && k !== '__proto__' && k !== 'constructor' && k !== 'prototype';
+function pickShared(s) {
+ const o = {};
+ for (const k of SHARED_KEYS) if (own(s,k)) o[k] = copy(s[k]);
+ return o;
+}
+function diffPlans(base, next) {
+ const operations=[];
+ function walk(a,b,path) {
+  if (JSON.stringify(a)===JSON.stringify(b)) return;
+  if (Array.isArray(a) && Array.isArray(b) &&
+      (a.length===0 || a.every(x=>plain(x)&&typeof x.id==='string')) &&
+      (b.length===0 || b.every(x=>plain(x)&&typeof x.id==='string'))) {
+   const old = new Map(a.map(x=>[x.id,x]));
+   const newer = new Map(b.map(x=>[x.id,x]));
+   for (const [key,val] of newer) if (!old.has(key)||JSON.stringify(old.get(key))!==JSON.stringify(val))
+    operations.push({op:'upsert',path,key,value:copy(val)});
+   for (const key of old.keys()) if (!newer.has(key)) operations.push({op:'remove',path,key});
+   return;
+  }
+  if (plain(a)&&plain(b)) {
+   for (const k of new Set([...Object.keys(a),...Object.keys(b)])) {
+    if (!safeKey(k)) continue;
+    if (!own(b,k)) operations.push({op:'delete',path:[...path,k]});
+    else if (!own(a,k)) operations.push({op:'set',path:[...path,k],value:copy(b[k])});
+    else walk(a[k],b[k],[...path,k]);
+   }
+   return;
+  }
+  operations.push({op:'set',path,value:copy(b)});
+ }
+ walk(base,next,[]);
+ return operations;
+}
+function applyOps(base,operations){
+ let result=copy(base);
+ for (const operation of operations){
+  if (!Array.isArray(operation.path)||operation.path.some(k=>!safeKey(k))) continue;
+  if (!operation.path.length){if (operation.op==='set') result=copy(operation.value);continue;}
+  let p=result;
+  for (let i=0;i<operation.path.length-1;i++){
+   const k=operation.path[i]; if (!plain(p[k])) p[k]={}; p=p[k];
+  }
+  const k=operation.path.at(-1);
+  if (operation.op==='set') p[k]=copy(operation.value);
+  else if (operation.op==='delete') delete p[k];
+  else if (operation.op==='upsert'){
+   if(!Array.isArray(p[k]))p[k]=[];
+   const idx=p[k].findIndex(x=>x&&x.id===operation.key);
+   if(idx<0)p[k].push(copy(operation.value));else p[k][idx]=copy(operation.value);
+  }else if(operation.op==='remove' && Array.isArray(p[k])){
+   p[k]=p[k].filter(x=>x?.id!==operation.key);
+  }
+ }
+ return result;
+}
+function findOverlappingEdits(base,local,remote){
+ const a=diffPlans(base,local),b=diffPlans(base,remote);
+ const name=o=>o.path.join('.') + (o.key?':'+o.key:'');
+ const changed=new Set(b.map(name));
+ return a.map(name).filter(x=>changed.has(x));
+}
+
+return {pickShared,diffPlans,applyOps,findOverlappingEdits};
+})();
+/* Real-time sharing for Japan Journey 2026.
+ * Requires Firebase Authentication (anonymous) and Cloud Firestore configured by the trip owner.
+ * GitHub Pages serves the UI; the Firestore document is the shared source of truth.
+ */
+const {pickShared,diffPlans,applyOps,findOverlappingEdits} = SYNC;
+const API=window.TripApp;
+if(!API)throw new Error('Trip dashboard must load before collaboration.js');
+const CONFIG_KEY='japan_trip_2026_firebase_web_config';
+const LAST_ROOM='japan_trip_2026_last_shared_room';
+const SAVE_DELAY=950;
+const copy=v=>JSON.parse(JSON.stringify(v));
+let config=null, firebase=null, auth=null, database=null, ref=null, roomId=null;
+let unsubscribe=null, base=null, timer=null, writing=false, connected=false, uiStatus='local';
+let lastRevision=0;
+const params=new URLSearchParams(location.hash.startsWith('#')?location.hash.slice(1):'');
+const validRoom=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{43}$/.test(v);
+const validConfig=v=>v&&typeof v==='object'&&typeof v.apiKey==='string'&&v.apiKey.length>10&&typeof v.appId==='string'&&v.appId.length>8&&typeof v.projectId==='string'&&v.projectId.length>2;
+function encode64(str){return btoa(Array.from(new TextEncoder().encode(str),x=>String.fromCharCode(x)).join('')).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function decode64(str){const data=atob(str.replace(/-/g,'+').replace(/_/g,'/'));return new TextDecoder().decode(Uint8Array.from(data,c=>c.charCodeAt(0)))}
+function setStatus(mode,detail='',extra={}){
+ uiStatus=mode;
+ const names={local:'Local only',config:'Firebase setup required',ready:'Ready to share',connecting:'Connecting…',live:'Live · synced',saving:'Saving changes…',offline:'Offline · local changes',error:'Sync error',missing:'Room not found'};
+ API.collabStatus({mode,label:names[mode]||mode,detail,room:roomId,lastRevision,...extra});
+}
+function parseFirebaseWebConfig(text){
+ let src=String(text||'').trim();
+ if(src.includes('private_key')||src.includes('privateKey')||src.includes('service_account'))throw Error('Do not paste a service account or private key. Use Firebase Web App config only.');
+ if(src.startsWith('const ')||src.startsWith('var ')||src.startsWith('let '))src=src.slice(src.indexOf('{'));
+ if(src.startsWith('window.'))src=src.slice(src.indexOf('{'));
+ if(src.indexOf('{')>=0&&src.lastIndexOf('}')>=0)src=src.slice(src.indexOf('{'),src.lastIndexOf('}')+1);
+ src=src.replace(/([{,]\s*)([A-Za-z][\w]*)(\s*:)/g,'$1"$2"$3').replace(/,\s*}/g,'}');
+ const result=JSON.parse(src);
+ if(!validConfig(result))throw Error('The config needs apiKey, projectId and appId from Firebase Project settings → Your apps → Web app.');
+ return {apiKey:result.apiKey,authDomain:result.authDomain||`${result.projectId}.firebaseapp.com`,projectId:result.projectId,appId:result.appId,messagingSenderId:result.messagingSenderId||''};
+}
+function getConfig(){
+ if(params.has('fb'))try{const x=JSON.parse(decode64(params.get('fb')));if(validConfig(x))return x}catch{}
+ if(validConfig(window.TRIP_FIREBASE_CONFIG))return window.TRIP_FIREBASE_CONFIG;
+ try{const x=JSON.parse(localStorage.getItem(CONFIG_KEY));if(validConfig(x))return x}catch{}
+ return null;
+}
+async function loadFirebase(){
+ if(!config)throw Error('Firebase configuration is missing.');
+ if(database)return;
+ setStatus('connecting','Loading Firebase…');
+ const version='13.2.0';
+ const [{initializeApp},{getAuth,signInAnonymously},{getFirestore,doc,onSnapshot,getDocFromServer,runTransaction,serverTimestamp}]=await Promise.all([
+  import(`https://www.gstatic.com/firebasejs/${version}/firebase-app.js`),
+  import(`https://www.gstatic.com/firebasejs/${version}/firebase-auth.js`),
+  import(`https://www.gstatic.com/firebasejs/${version}/firebase-firestore.js`)
+ ]);
+ const app=initializeApp(config,'japan-journey-2026');
+ auth=getAuth(app);
+ await signInAnonymously(auth);
+ database=getFirestore(app);
+ firebase={doc,onSnapshot,getDocFromServer,runTransaction,serverTimestamp};
+ setStatus('ready','Firebase connected. Create a private invite link or open one shared by a collaborator.');
+}
+function fullInvite(){
+ if(!roomId||!config)return '';
+ const u=new URL(location.href);u.hash='room='+encodeURIComponent(roomId)+'&fb='+encodeURIComponent(encode64(JSON.stringify(config)));
+ return u.toString();
+}
+function makeRoomId(){const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function stopListener(){if(unsubscribe){unsubscribe();unsubscribe=null}if(timer){clearTimeout(timer);timer=null}connected=false;ref=null;base=null;lastRevision=0;}
+function errMessage(error){return error?.message||String(error)}
+function stateIsDirty(){return base!==null&&diffPlans(base,API.getSharedPlan()).length>0;}
+function applyRemote(plan){API.setSharedPlan(plan);}
+function snapshotArrived(snapshot){
+ if(!connected)return;
+ if(!snapshot.exists()){setStatus('missing','The shared room no longer exists. Local editing remains available.');return}
+ const data=snapshot.data();
+ if(!data||!data.plan||data.plan.version!==2){setStatus('error','This room contains an unsupported plan format.');return}
+ const fresh=copy(data.plan);
+ const incomingVersion=Number(data.revision)||0;
+ if(incomingVersion===lastRevision&&base!==null){if(!snapshot.metadata.fromCache&&!stateIsDirty()&&!writing)setStatus('live','Connected. Changes are visible to all people using this invite link.');return;}
+ const local=API.getSharedPlan();
+ let updated=fresh;
+ if(base!==null){
+  const pending=diffPlans(base,local);
+  if(pending.length){
+   const overlaps=findOverlappingEdits(base,local,fresh);
+   updated=applyOps(fresh,pending);
+   if(overlaps.length)API.notify('Concurrent edits to '+overlaps.slice(0,2).join(', ')+' — latest saved update wins.');
+  }
+ }
+ base=fresh;
+ lastRevision=incomingVersion;
+ if(JSON.stringify(updated)!==JSON.stringify(local))applyRemote(updated);
+ if(snapshot.metadata.fromCache)setStatus('offline','Displaying cached data; waiting for the server. Local changes remain saved.');
+ else if(diffPlans(fresh,updated).length) {setStatus('saving','Your edits are waiting to sync.');scheduleWrite();}
+ else setStatus('live','Live connection active. Local changes are synchronized.');
+}
+async function startListening(id){
+ stopListener();roomId=id;ref=firebase.doc(database,'tripRooms',id);connected=true;
+ unsubscribe=firebase.onSnapshot(ref,{includeMetadataChanges:true},snapshotArrived,error=>setStatus('error','Realtime updates stopped: '+errMessage(error)));
+}
+async function connectShared(id,created=false){
+ if(!validRoom(id))throw Error('Invalid invitation room identifier.');
+ await loadFirebase();
+ setStatus('connecting','Opening shared room…');
+ const target=firebase.doc(database,'tripRooms',id);
+ // Server read prevents treating a transient local cache miss as a new room.
+ const doc=await firebase.getDocFromServer(target);
+ if(!doc.exists())throw Error('Shared room not found. Ask for a fresh invitation link.');
+ if(!created&&localStorage.getItem(LAST_ROOM)!==id){
+  const keep=confirm('Join the shared trip? The cloud plan will replace your current local itinerary. Export a JSON backup first if you want to keep the local version. Continue?');
+  if(!keep){setStatus('local','Invitation not joined; local plan is unchanged.');return false}
+ }
+ roomId=id;
+ localStorage.setItem(LAST_ROOM,id);
+ // Cloud data is the source of truth when first joining; do not publish stale local edits.
+ applyRemote(copy(doc.data().plan));
+ await startListening(id);
+ base=copy(doc.data().plan);
+ lastRevision=Number(doc.data().revision)||0;
+ setStatus('live','Shared trip opened. Edits sync automatically.');
+ return true;
+}
+async function createSharedRoom(){
+ if(connected){API.notify('You are already in a shared room.');return}
+ if(!confirm('Create a shared copy of this itinerary? Anyone with the invitation link can see and edit the trip, including notes, hotels and budget. Do not share passport or payment details.'))return;
+ try{
+  await loadFirebase();
+  const id=makeRoomId();
+  const initial=API.getSharedPlan();
+  const roomRef=firebase.doc(database,'tripRooms',id);
+  setStatus('connecting','Creating the shared trip…');
+  await firebase.runTransaction(database,async t=>{
+   const s=await t.get(roomRef);
+   if(s.exists())throw Error('Room identifier collision. Retry creation.');
+   t.set(roomRef,{plan:initial,revision:1,updatedBy:auth.currentUser.uid,updatedAt:firebase.serverTimestamp()});
+  });
+  roomId=id;localStorage.setItem(LAST_ROOM,id);
+  const url=new URL(location.href);url.hash='room='+id+'&fb='+encodeURIComponent(encode64(JSON.stringify(config)));
+  history.replaceState(null,'',url.toString());
+  await connectShared(id,true);
+  API.notify('Shared room created! Copy the invitation link to invite your colleague.');
+ }catch(error){setStatus('error','Could not create the room: '+errMessage(error));}
+}
+function scheduleWrite(){
+ if(!connected||base===null)return;
+ if(!stateIsDirty()){if(!writing)setStatus('live','All changes saved in the cloud.');return}
+ setStatus('saving','Local changes are waiting to sync.');
+ clearTimeout(timer);timer=setTimeout(flush, SAVE_DELAY);
+}
+async function flush(){
+ if(!connected||writing||!ref||base===null)return;
+ const local=API.getSharedPlan();
+ const patch=diffPlans(base,local);
+ if(!patch.length){setStatus('live','All changes saved in the cloud.');return}
+ writing=true;
+ let success=false;
+ setStatus('saving','Saving '+patch.length+' change(s)…');
+ try{
+  await firebase.runTransaction(database,async t=>{
+   const current=await t.get(ref);
+   if(!current.exists())throw Error('This room was removed.');
+   const data=current.data();
+   const merged=applyOps(data.plan,patch);
+   t.update(ref,{plan:merged,revision:(Number(data.revision)||0)+1,updatedAt:firebase.serverTimestamp(),updatedBy:auth.currentUser.uid});
+  });
+  success=true;
+  if(connected)setStatus('live','Changes saved to the cloud.');
+ }catch(error){setStatus('error','Cloud write failed: '+errMessage(error)+' · Export a backup before closing.');}
+ finally{writing=false;if(success&&connected&&base!==null&&stateIsDirty())scheduleWrite();}
+}
+function localSaved(){if(connected)scheduleWrite();}
+async function copyInvite(){
+ const url=fullInvite();if(!url){API.notify('Create or join a shared room first.');return}
+ try{await navigator.clipboard.writeText(url)}catch{const t=document.createElement('textarea');t.value=url;document.body.append(t);t.select();document.execCommand('copy');t.remove()}
+ API.notify('Invitation link copied. Anyone with the link can edit.');
+}
+async function configure(text){
+ try{
+  const value=parseFirebaseWebConfig(text);
+  if(database&&config?.projectId!==value.projectId){API.notify('Reload the page to switch Firebase projects.');return}
+  config=value;localStorage.setItem(CONFIG_KEY,JSON.stringify(config));
+  setStatus('ready','Firebase Web App settings saved in this browser. Set Firestore rules and enable anonymous authentication first.');
+  await loadFirebase();
+  const fromLink=params.get('room');
+  if(validRoom(fromLink))await connectShared(fromLink);
+ }catch(error){setStatus('error','Configuration error: '+errMessage(error));}
+}
+function disconnect(){
+ if(stateIsDirty()&&!confirm('Some changes may not have reached the cloud. Export a backup before leaving. Leave anyway?'))return;
+ stopListener();roomId=null;localStorage.removeItem(LAST_ROOM);
+ const url=new URL(location.href);url.hash='';history.replaceState(null,'',url.toString());
+ setStatus(config?'ready':'config','Disconnected from the shared room; edits remain local.');
+}
+async function retry(){
+ if(connected&&base!==null&&stateIsDirty()){await flush();return}
+ if(!config){setStatus('config','Paste Firebase Web App config to connect.');return}
+ try{
+  if(roomId){await connectShared(roomId,true);return}
+  const id=params.get('room');if(validRoom(id))await connectShared(id);
+  else await loadFirebase();
+ }catch(e){setStatus('error',errMessage(e));}
+}
+const api={create:createSharedRoom,copy:copyInvite,leave:disconnect,retry,configure,localSaved,invite:fullInvite};
+window.TripCollab=api;
+config=getConfig();
+if(config){
+ setStatus('ready','Firebase settings loaded. Create a shared room to collaborate.');
+ const room=params.get('room');
+ if(validRoom(room))connectShared(room).catch(e=>setStatus('error','Cannot join shared room: '+errMessage(e)));
+}else{
+ setStatus('config','Set up Firebase Authentication and Firestore, then paste the Web App configuration in the Collaboration tab.');
+}
+
+</script>
+</body></html>
