@@ -461,7 +461,7 @@ async function loadFirebase(){
  if(!config)throw Error('Firebase configuration is missing.');
  if(database)return;
  setStatus('connecting','Loading Firebase…');
- const version='13.2.0';
+ const version='12.17.1';
  const [{initializeApp},{getAuth,signInAnonymously},{getFirestore,doc,onSnapshot,getDocFromServer,runTransaction,serverTimestamp}]=await Promise.all([
   import(`https://www.gstatic.com/firebasejs/${version}/firebase-app.js`),
   import(`https://www.gstatic.com/firebasejs/${version}/firebase-auth.js`),
