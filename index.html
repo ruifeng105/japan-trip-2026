@@ -23,17 +23,18 @@
 .collab-url{width:100%;border:1px solid #d7e1df;border-radius:10px;padding:11px;color:#426368;font-size:12px;background:white}
 .collab-warning{font-size:12px;background:#fff8ee;border:1px solid #f0dfbd;padding:13px;border-radius:12px;margin-top:16px;color:#8a6330}
 .custom-note-card{border:1px solid var(--line);border-radius:13px;padding:16px;background:#fbfdfc}.custom-note-grid{display:grid;gap:12px;margin-top:15px}.custom-note-card .fields{grid-template-columns:1fr}.custom-note-card textarea{min-height:110px}.custom-note-card .hrow{margin-bottom:12px}.custom-note-card .btn.danger{margin-left:auto}
+.hero h1{overflow-wrap:anywhere}.stay-dynamic-route .route-node{min-height:115px}.accommodation [data-stay-field]{width:100%}
 </style></head><body>
 <div class="app">
-<header class="top"><div class="brand"><div class="mark">⛩</div><div><div class="brand-title">JAPAN JOURNEY <span style="color:var(--coral)">2026</span></div><div class="brand-sub">Editable travel dashboard · Kansai → Mount Fuji → Tokyo</div></div></div>
+<header class="top"><div class="brand"><div class="mark">⛩</div><div><div class="brand-title">JAPAN JOURNEY <span style="color:var(--coral)">2026</span></div><div class="brand-sub">Editable travel dashboard · <span id="routeSubtitle">Kobe → Mount Fuji → Tokyo</span></div></div></div>
 <div class="actions"><button class="btn soft" id="collabBtn">☁ Collaboration</button><button class="btn" id="exportBtn">↓ Export backup</button><button class="btn" id="importBtn">↑ Import plan</button><button class="btn" id="shareBtn">⧉ Copy summary</button><button class="btn" id="printBtn">▤ Print / PDF</button><button class="btn danger" id="resetBtn">↺ Reset</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></header>
-<section class="hero"><div><div class="eyebrow" style="color:#eac4a5">10 DAYS IN JAPAN · DECEMBER 13–22, 2026</div><h1>Kobe. Mount Fuji.<br>Tokyo.</h1><p>Your collaborative-ready trip planner for a conference and vacation. Edit hotels, destinations, daily plans, restaurants, activities, and a budget shown in euros.</p>
-<div class="micro"><span class="chip light">📍 Kobe · 5 nights</span><span class="chip light">🗻 Mount Fuji · 1 night</span><span class="chip light">🗼 Tokyo · 3 nights</span><span class="chip light">💶 Budget in EUR</span></div></div>
+<section class="hero"><div><div class="eyebrow" style="color:#eac4a5">10 DAYS IN JAPAN · DECEMBER 13–22, 2026</div><h1 id="heroTripTitle">Kobe · Mount Fuji · Tokyo</h1><p>Your collaborative-ready trip planner for a conference and vacation. Edit hotels, destinations, daily plans, restaurants, activities, and a budget shown in euros.</p>
+<div class="micro" id="heroTripChips"></div></div>
 <div class="hero-art" aria-hidden="true"><svg viewBox="0 0 470 240" xmlns="http://www.w3.org/2000/svg"><circle cx="343" cy="81" r="57" fill="#e19b78" opacity=".95"/><path d="M70 246 242 31 400 246Z" fill="#83aaa3"/><path d="M165 131 242 31 310 131 269 111 246 94 220 112Z" fill="#fffaf5"/><path d="M12 248 162 136 277 248Z" fill="#538c86"/><path d="M266 247 375 138 483 247Z" fill="#417b77"/><path d="M0 207q81-24 156-2t156 1q85-30 161-6v60H0Z" fill="#153b46" opacity=".34"/></svg></div></section>
 <div class="hrow" style="margin-top:14px"><span class="collab-status" id="collabIndicator" data-mode="local">● Local only</span><span class="muted" style="font-size:12px">Shared editing requires Firebase setup; offline work still works.</span></div>
 <div class="notice" id="saveState">● Edits are saved to this browser only. Export a backup to transfer or share changes. Hotel selection does not equal a confirmed reservation.</div>
 <section class="summary" id="stats"></section>
-<nav class="tabs" aria-label="Trip dashboard pages"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="itinerary">Daily itinerary</button><button class="tab" data-tab="fuji">Fuji options</button><button class="tab" data-tab="budget">Hotels & budget</button><button class="tab" data-tab="notes">Travel notes</button><button class="tab" data-tab="collab">☁ Collaboration</button></nav>
+<nav class="tabs" aria-label="Trip dashboard pages"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="itinerary">Daily itinerary</button><button class="tab" data-tab="fuji">Fuji options</button><button class="tab" data-tab="budget">Destinations & budget</button><button class="tab" data-tab="notes">Travel notes</button><button class="tab" data-tab="collab">☁ Collaboration</button></nav>
 <div class="layout"><main id="main"></main><aside class="sidebar" id="sidebar"></aside></div>
 <footer class="footer">Japan Journey 2026 · <strong>English edition</strong> · Local auto-save · Optional live collaboration via Firebase · Live FX if online · No live hotel availability · Confirm schedules with official providers.</footer></div>
 <div id="modalRoot"></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -110,7 +111,7 @@ const seeded=[
  act('2026-12-22','09:00','Flexible Tokyo morning / airport transfer','Tokyo airport TBC','transport','Departure airport and time are not yet confirmed.')
 ];
 const defaultCosts=Object.fromEntries(COST_ROWS.map(r=>[r[0],{amount:'',currency:'EUR'}]));
-const DEFAULT={version:2,region:'kawaguchiko',regionHotels:{kawaguchiko:'none',yamanakako:'none',hakone:'none'},hotels:{kobe:'okura',tokyo:'apa_pride'},customHotelNames:{kobe:'',tokyo:'',fuji:''},booking:{kobe:'selected',fuji:'pending',tokyo:'selected'},sessionDate:'',sessionTime:'',sessionTitle:'My conference session (TBC)',sessionNotes:'We only need to attend our own session at Kobe Portopia Hotel.',selectedDay:'2026-12-18',activities:seeded,costs:defaultCosts,fx:{rate:FALLBACK_RATE,mode:'auto',source:'Reference rate (offline fallback)',date:'2026-11-12'},tasks:[
+const DEFAULT={version:2,region:'kawaguchiko',regionHotels:{kawaguchiko:'none',yamanakako:'none',hakone:'none'},hotels:{kobe:'okura',tokyo:'apa_pride'},customHotelNames:{kobe:'',tokyo:'',fuji:''},stays:[{id:'stay_kobe',from:'2026-12-13',to:'2026-12-18',place:'Kobe',hotel:'Hotel Okura Kobe',booking:'selected',cost:{amount:'',currency:'EUR'}},{id:'stay_fuji',from:'2026-12-18',to:'2026-12-19',place:'Mount Fuji',hotel:'',booking:'pending',cost:{amount:'',currency:'EUR'}},{id:'stay_tokyo',from:'2026-12-19',to:'2026-12-22',place:'Tokyo',hotel:'APA Hotel PRIDE Akasaka Kokkaigijidomae',booking:'selected',cost:{amount:'',currency:'EUR'}}],booking:{kobe:'selected',fuji:'pending',tokyo:'selected'},sessionDate:'',sessionTime:'',sessionTitle:'My conference session (TBC)',sessionNotes:'We only need to attend our own session at Kobe Portopia Hotel.',selectedDay:'2026-12-18',activities:seeded,costs:defaultCosts,fx:{rate:FALLBACK_RATE,mode:'auto',source:'Reference rate (offline fallback)',date:'2026-11-12'},tasks:[
 {id:'t1',text:'Confirm our session date and time on Dec 14–16',done:false},
 {id:'t2',text:'Confirm Hotel Okura Kobe booking (Dec 13–18)',done:false},
 {id:'t3',text:'Confirm APA PRIDE Akasaka booking (Dec 19–22)',done:false},
@@ -170,6 +171,25 @@ function normalize(old){
  if(!Array.isArray(s.tasks))s.tasks=clone(DEFAULT.tasks);
  if(!Array.isArray(s.noteEntries))s.noteEntries=[];
  s.noteEntries=s.noteEntries.filter(n=>n&&typeof n.id==='string').slice(0,40).map(n=>({id:n.id,title:String(n.title??'').slice(0,120),body:String(n.body??'').slice(0,2000)}));
+ if(!Array.isArray(old.stays)){
+  // Migrate existing backups and shared rooms into flexible stays.
+  const legacyHotel=(which)=>{
+   const options=which==='fuji'?REGIONS[s.region].hotels:HOTEL_OPTIONS[which];
+   const selected=which==='fuji'?(s.regionHotels?.[s.region]||'none'):s.hotels?.[which];
+   const found=options?.find(x=>x[0]===selected);
+   return !found||selected==='none'?'':selected==='custom'?(s.customHotelNames?.[which]||''):found[1];
+  };
+  s.stays=[
+   {id:'stay_kobe',from:'2026-12-13',to:'2026-12-18',place:'Kobe',hotel:legacyHotel('kobe'),booking:s.booking.kobe,cost:clone(s.costs.kobe)},
+   {id:'stay_fuji',from:'2026-12-18',to:'2026-12-19',place:'Mount Fuji',hotel:legacyHotel('fuji'),booking:s.booking.fuji,cost:clone(s.costs.fuji)},
+   {id:'stay_tokyo',from:'2026-12-19',to:'2026-12-22',place:'Tokyo',hotel:legacyHotel('tokyo'),booking:s.booking.tokyo,cost:clone(s.costs.tokyo)}
+  ];
+ }else s.stays=old.stays.filter(x=>x&&typeof x.id==='string').slice(0,20).map(x=>({
+  id:String(x.id).slice(0,80),from:String(x.from||'2026-12-13'),to:String(x.to||'2026-12-22'),
+  place:String(x.place||'').slice(0,80),hotel:String(x.hotel||'').slice(0,120),
+  booking:['selected','booked','pending'].includes(x.booking)?x.booking:'pending',
+  cost:{amount:String(x.cost?.amount??''),currency:x.cost?.currency==='JPY'?'JPY':'EUR'}
+ }));
  if(!s.fx||!isFinite(Number(s.fx.rate))||Number(s.fx.rate)<=0)s.fx=clone(DEFAULT.fx);
  return s;
 }
@@ -178,10 +198,10 @@ try{stored=JSON.parse(localStorage.getItem(STORE)||localStorage.getItem(LEGACY)|
 state=normalize(stored);
 let tab='overview', notifyTimer;
 let collabInfo={mode:'local',label:'Local only',detail:'Collaboration has not loaded.',room:null,lastRevision:0};
-const SHARED_FIELDS=['version','region','regionHotels','hotels','customHotelNames','booking','sessionDate','sessionTime','sessionTitle','sessionNotes','activities','tasks','costs','notes','noteEntries','flightArrival','flightReturn'];
+const SHARED_FIELDS=['version','region','regionHotels','hotels','customHotelNames','stays','booking','sessionDate','sessionTime','sessionTitle','sessionNotes','activities','tasks','costs','notes','noteEntries','flightArrival','flightReturn'];
 function sharedPlan(){return Object.fromEntries(SHARED_FIELDS.map(k=>[k,clone(state[k])]));}
 function showCollabStatus(info){collabInfo={...collabInfo,...info};const e=$('#collabIndicator');if(e){e.dataset.mode=collabInfo.mode;e.textContent='● '+collabInfo.label;}if(tab==='collab'&&!document.activeElement?.matches('input,textarea,select'))render();}
-function applyCollaboratorPlan(plan){const preserveDay=state.selectedDay,preserveFx=clone(state.fx);state=normalize({...state,...clone(plan),selectedDay:preserveDay,fx:preserveFx});try{localStorage.setItem(STORE,JSON.stringify(state))}catch{}const active=document.activeElement;const editing=active?.matches('input:not([type=checkbox]),textarea,select');if(!editing)render();else renderStats();}
+function applyCollaboratorPlan(plan){const preserveDay=state.selectedDay,preserveFx=clone(state.fx);state=normalize({...state,...clone(plan),selectedDay:preserveDay,fx:preserveFx});try{localStorage.setItem(STORE,JSON.stringify(state))}catch{}const active=document.activeElement;const editing=active?.matches('input:not([type=checkbox]),textarea,select');if(!editing)render();else {renderStats();window.TripRoutes?.renderHeader?.();}}
 
 function save(){try{localStorage.setItem(STORE,JSON.stringify(state));$('#saveState').textContent='● Saved locally · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · '+(collabInfo.room?'Cloud sync status: '+collabInfo.label:'Use the Collaboration tab to share edits online.');}catch{$('#saveState').textContent='⚠ Browser storage unavailable. Please export a JSON backup.'}window.TripCollab?.localSaved?.();}
 function tell(m){let n=$('#toast');n.textContent=m;n.classList.add('show');clearTimeout(notifyTimer);notifyTimer=setTimeout(()=>n.classList.remove('show'),2700)}
@@ -196,7 +216,7 @@ function eventsFor(date){let a=state.activities.filter(x=>x.date===date&&(!x.reg
  return a.sort((a,b)=>(a.time||'').localeCompare(b.time||''));
 }
 function moneyEUR(row){const n=Number(row?.amount);if(!Number.isFinite(n)||n<0)return 0;return row.currency==='JPY'?n*Number(state.fx.rate):n;}
-function budgetTotal(){return Object.values(state.costs).reduce((sum,row)=>sum+moneyEUR(row),0)}
+function budgetTotal(){return state.stays.reduce((sum,row)=>sum+moneyEUR(row.cost),0)+['transport','food','activities'].reduce((sum,key)=>sum+moneyEUR(state.costs[key]),0)}
 function hotelCards(){return [
  {key:'kobe',icon:'🌉',place:'Kobe · 5 nights',name:hotelName('kobe'),dates:'Dec 13 → Dec 18',status:state.booking.kobe},
  {key:'fuji',icon:region().icon,place:region().name+' · 1 night',name:hotelName('fuji'),dates:'Dec 18 → Dec 19',status:state.booking.fuji},
@@ -254,7 +274,7 @@ function collab(){
  <div class="collab-actions"><button class="btn soft" data-collab="configure">Save Firebase config in this browser</button><a class="btn" href="https://github.com/ruifeng105/japan-trip-2026/blob/main/COLLABORATION_SETUP.md" target="_blank" rel="noopener">Read setup guide ↗</a></div>
  <div class="collab-help"><b>Sync behavior:</b> Changes are saved locally first, then typically synchronized after about one second. Separate activities and budget items merge independently. If two people change the exact same field at once, the later committed change wins. Cloud access requires internet. Export JSON backups periodically.</div></section>`;
 }
-function render(){renderStats();sidebar();$$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));$('#main').innerHTML=({overview,itinerary,fuji,budget,notes,collab})[tab]();}
+function render(){renderStats();sidebar();$$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));$('#main').innerHTML=({overview,itinerary,fuji,budget,notes,collab})[tab]();window.TripRoutes?.render?.();}
 function navigate(to){if(!['overview','itinerary','fuji','budget','notes','collab'].includes(to))return;tab=to;render();const tabs=$('.tabs');window.scrollTo({top:Math.max(0,tabs.getBoundingClientRect().top+window.scrollY-10),behavior:'smooth'});}
 function editActivity(activityId,date){const source=state.activities.find(x=>x.id===activityId);if(activityId==='session'){navigate('overview');setTimeout(()=>$('#sessionDate')?.focus(),100);return}
  let a=source||{id:'',date:date||state.selectedDay,time:'12:00',title:'',location:'',category:'sight',note:'',optional:false,done:false,region:['2026-12-18','2026-12-19'].includes(date||state.selectedDay)?state.region:null};
@@ -292,7 +312,7 @@ function changeHotel(which,value){setChange(()=>{
  },'Hotel selection updated');
  if(value==='custom')document.getElementById(which==='fuji'&&tab==='fuji'?'fujiCustomName':'custom-'+which)?.focus();
 }
-function makeSummary(){const lines=['JAPAN TRIP | DEC 12–22, 2026','',`Kobe (Dec 13–18): ${hotelName('kobe')}`,`Mt. Fuji (Dec 18–19): ${region().name} · ${hotelName('fuji')}`,`Tokyo (Dec 19–22): ${hotelName('tokyo')}`,`Budget: ${fmtE(budgetTotal())}`,''];
+function makeSummary(){if(window.TripRoutes?.summary)return window.TripRoutes.summary(state);const lines=['JAPAN TRIP | DEC 12–22, 2026','',`Kobe (Dec 13–18): ${hotelName('kobe')}`,`Mt. Fuji (Dec 18–19): ${region().name} · ${hotelName('fuji')}`,`Tokyo (Dec 19–22): ${hotelName('tokyo')}`,`Budget: ${fmtE(budgetTotal())}`,''];
  for(let day of DAYS){lines.push(`${day[0]} (${day[1]}) — ${day[2]}`);for(let a of eventsFor(day[0]))lines.push(`  ${a.time} ${a.title}${a.optional?' [optional]':''}`);lines.push('');}
  return lines.join('\n');}
 function downloadBackup(){const content=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json;charset=utf-8'});let url=URL.createObjectURL(content);const a=document.createElement('a');a.href=url;a.download='Japan_Trip_2026_English_Backup.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);tell('Backup exported');}
@@ -344,10 +364,11 @@ $('#resetBtn').onclick=()=>{if(confirm('Reset to the original plan? If you are i
 $('#printBtn').onclick=()=>window.print();
 $('#shareBtn').onclick=async()=>{let s=makeSummary();try{await navigator.clipboard.writeText(s);tell('Itinerary summary copied')}catch{const field=document.createElement('textarea');field.value=s;document.body.append(field);field.select();document.execCommand('copy');field.remove();tell('Itinerary summary copied')}};
 window.addEventListener('keydown',e=>{if(e.key==='Escape')$('#modalRoot').innerHTML=''});
-window.TripApp={getSharedPlan:sharedPlan,setSharedPlan:applyCollaboratorPlan,collabStatus:showCollabStatus,notify:tell};
+window.TripApp={getSharedPlan:sharedPlan,setSharedPlan:applyCollaboratorPlan,collabStatus:showCollabStatus,notify:tell,getStayPlan:()=>clone(state.stays),getExchangeRate:()=>Number(state.fx.rate),getTotalBudget:budgetTotal,setStayPlan:(x,renderNow=true)=>{state.stays=clone(x);save();if(renderNow)render();else window.TripRoutes?.renderHeader?.();}};
 render();if(state.fx.mode==='auto')fetchFx();
 })();
 </script>
+<script src="./route-planner.js"></script>
 <script>window.TRIP_FIREBASE_CONFIG = null;</script>
 <script type="module">
 const SYNC = (()=>{
@@ -358,7 +379,7 @@ const SYNC = (()=>{
  * No third-party dependencies; deterministic for testability.
  */
 const SHARED_KEYS = Object.freeze([
-  'version','region','regionHotels','hotels','customHotelNames','booking',
+  'version','region','regionHotels','hotels','customHotelNames','stays','booking',
   'sessionDate','sessionTime','sessionTitle','sessionNotes',
   'activities','tasks','costs','notes','noteEntries','flightArrival','flightReturn'
 ]);
