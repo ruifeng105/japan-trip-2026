@@ -12,11 +12,14 @@ service cloud.firestore {
         && request.resource.data.plan is map
         && request.resource.data.plan.version == 2
         && request.resource.data.plan.keys().hasOnly([
-          'version', 'region', 'regionHotels', 'hotels', 'customHotelNames',
+          'version', 'region', 'regionHotels', 'hotels', 'customHotelNames', 'stays',
           'booking', 'sessionDate', 'sessionTime', 'sessionTitle', 'sessionNotes',
           'activities', 'tasks', 'costs', 'notes', 'noteEntries', 'flightArrival', 'flightReturn'
         ])
         && request.resource.data.plan.activities is list
+        && (!request.resource.data.plan.keys().hasAny(['stays'])
+          || (request.resource.data.plan.stays is list
+            && request.resource.data.plan.stays.size() <= 20))
         && request.resource.data.plan.tasks is list
         && (!request.resource.data.plan.keys().hasAny(['noteEntries'])
           || (request.resource.data.plan.noteEntries is list
