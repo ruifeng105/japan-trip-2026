@@ -38,6 +38,8 @@ service cloud.firestore {
       allow create: if validRoomId(roomId) && validPlanWrite()
         && request.resource.data.revision == 1;
       allow update: if validRoomId(roomId) && validPlanWrite()
+        && (!resource.data.plan.keys().hasAny(['stays'])
+          || request.resource.data.plan.keys().hasAny(['stays']))
         && request.resource.data.revision == resource.data.revision + 1;
       allow delete: if false;
     }
