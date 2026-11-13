@@ -195,7 +195,7 @@ const stays=list(),s=stays.find(x=>x.id===t.dataset.stayId);if(!s)return;
 const changed={...s,[field]:t.value};
 if((field==="from"||field==="to")&&!checkDates(changed.from,changed.to)){
 notify("Check-in and check-out must be valid dates within Dec 13–22.");
-render();return;
+t.value=s[field];return;
 }
 s[field]=t.value;persist(stays);return;
 }
