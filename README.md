@@ -10,7 +10,7 @@ After GitHub Pages is enabled: https://ruifeng105.github.io/japan-trip-2026/
 - Daily itinerary, sightseeing, restaurants, conference session scheduling, and notes
 - Default Kobe hotel: **Hotel Okura Kobe**, December 13–18 (selected, not necessarily booked)
 - Default Tokyo hotel: **APA Hotel PRIDE Akasaka Kokkaigijidomae**, December 19–22
-- Editable hotels in Kobe, the Mt. Fuji region, and Tokyo, with an **Other / Custom hotel** choice and a free-text hotel name
+- Any number of destination stays (within the nine fixed nights): add, split, remove and edit destinations, hotels, check-in/out dates and accommodation costs.
 - Fuji-region choices for December 18–19: **Lake Kawaguchi, Lake Yamanaka, and Hakone**
 - EUR budget with JPY-to-EUR currency conversion and fallback rate
 - Fully editable main travel notes, plus add/edit/delete custom titled note cards
@@ -36,3 +36,7 @@ Exchange rates are informational and may be stale when offline. Hotel defaults r
 ## Real-time shared editing
 
 The dashboard now includes a **Collaboration** tab with Firebase-based real-time sharing. **It is not active until the project owner completes the Firebase setup.** See [COLLABORATION_SETUP.md](./COLLABORATION_SETUP.md) for instructions and security considerations. Sharing the normal GitHub Pages URL alone does not synchronize edits; participants must join the same invitation room.
+
+## Flexible destinations (November 2026 update)
+
+The itinerary is **not limited to three stops**. Under **Destinations & budget**, add or split stays, change the places and dates, or remove stops. The overall travel window remains **Dec 13–22, 2026**. All stays can have custom hotel names and accommodation costs; the editor flags gaps and overlapping dates. Header, overview, accommodation summary and backup reflect the updated route. Previous backups and Firestore room plans are migrated on load. Default daily activities still reflect the original route, so review them after changing destinations. **Republish the latest `firestore.rules`** to enable synchronization of `stays` in existing shared rooms. All participants should refresh their browsers after updating.
