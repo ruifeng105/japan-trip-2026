@@ -131,6 +131,8 @@ const geo=x=>'https://www.google.com/maps/search/?api=1&query='+encodeURICompone
 const region=()=>REGIONS[state.region];
 const id=()=>('a_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8));
 function hotelName(which){
+ const stay=state.stays?.find(s=>s.id==='stay_'+which);
+ if(stay)return stay.hotel?.trim()||'Not selected yet';
  if(which==='fuji'){
   let opt=region().hotels.find(x=>x[0]===(state.regionHotels[state.region]||'none'));
   return !opt||opt[0]==='none'?'Not selected yet':opt[0]==='custom'?(state.customHotelNames.fuji||'Custom hotel (name pending)'):opt[1];
